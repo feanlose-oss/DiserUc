@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DiserUc Service</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#07110d;
+    color:#fff;
+    min-height:100vh;
+}
+
+button,input,select{
+    font:inherit;
+}
+
+header{
+    height:70px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 25px;
+    border-bottom:1px solid #183c2b;
+    background:#08140f;
+}
+
+.logo{
+    font-size:23px;
+    font-weight:900;
+}
+
+.logo span{
+    color:#23e681;
+}
+
+.user-area{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.user-name{
+    color:#9fb8aa;
+    font-size:14px;
+}
+
+.btn{
+    border:0;
+    border-radius:10px;
+    padding:11px 16px;
+    cursor:pointer;
+    font-weight:700;
+}
+
+.btn-green{
+    background:#23e681;
+    color:#03150c;
+}
+
+.btn-dark{
+    background:#10251a;
+    color:#fff;
+    border:1px solid #1d4934;
+}
+
+main{
+    max-width:1100px;
+    margin:auto;
+    padding:35px 18px 60px;
+}
+
+.hero{
+    margin-bottom:30px;
+}
+
+.hero h1{
+    font-size:38px;
+    margin-bottom:10px;
+}
+
+.hero h1 span{
+    color:#23e681;
+}
+
+.hero p{
+    color:#8ca799;
+}
+
+.card{
+    background:#0b1b13;
+    border:1px solid #19432e;
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:20px;
+}
+
+.card h2{
+    font-size:20px;
+    margin-bottom:18px;
+}
+
+select,
+input{
+    width:100%;
+    background:#07110d;
+    color:#fff;
+    border:1px solid #28543c;
+    border-radius:10px;
+    padding:13px;
+    outline:none;
+}
+
+select:focus,
+input:focus{
+    border-color:#23e681;
+}
+
+.products{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:14px;
+}
+
+.product{
+    background:#09160f;
+    border:1px solid #1b4931;
+    border-radius:14px;
+    padding:18px;
+    transition:.2s;
+}
+
+.product:hover{
+    border-color:#23e681;
+    transform:translateY(-2px);
+}
+
+.product .uc{
+    font-size:24px;
+    font-weight:900;
+    color:#23e681;
+}
+
+.product .price{
+    margin:12px 0;
+    font-size:18px;
+}
+
+.product .bonus{
+    color:#8cffbc;
+    font-size:13px;
+    margin-bottom:14px;
+}
+
+.product button{
+    width:100%;
+}
+
+.empty{
+    color:#7f9789;
+    text-align:center;
+    padding:25px;
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.72);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:100;
+}
+
+.modal.show{
+    display:flex;
+}
+
+.modal-box{
+    width:100%;
+    max-width:400px;
+    background:#0b1b13;
+    border:1px solid #25583b;
+    border-radius:18px;
+    padding:25px;
+}
+
+.modal-box h2{
+    margin-bottom:20px;
+}
+
+.field{
+    margin-bottom:13px;
+}
+
+.field label{
+    display:block;
+    color:#9db4a7;
+    font-size:13px;
+    margin-bottom:6px;
+}
+
+.modal-actions{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+}
+
+.modal-actions button{
+    flex:1;
+}
+
+.message{
+    margin-top:13px;
+    padding:10px;
+    border-radius:8px;
+    display:none;
+    font-size:14px;
+}
+
+.message.show{
+    display:block;
+}
+
+.success{
+    background:#0b3924;
+    color:#8cffbc;
+}
+
+.error{
+    background:#3b1115;
+    color:#ff9ba5;
+}
+
+@media(max-width:600px){
+    header{
+        padding:0 15px;
+    }
+
+    .user-name{
+        display:none;
+    }
+
+    .hero h1{
+        font-size:30px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        Diser<span>Uc</span> Service
+    </div>
+
+    <div class="user-area">
+        <span class="user-name" id="userName"></span>
+
+        <button
+            class="btn btn-dark"
+            id="loginButton"
+            onclick="openAuth()">
+            Kirish
+        </button>
+
+        <button
+            class="btn btn-green"
+            id="logoutButton"
+            onclick="logout()"
+            style="display:none">
+            Chiqish
+        </button>
+    </div>
+
+</header>
+
+
+<main>
+
+    <section class="hero">
+
+        <h1>
+            UC <span>Service</span>
+        </h1>
+
+        <p>
+            Davlatingizni tanlang va UC paketini tanlang.
+        </p>
+
+    </section>
+
+
+    <!-- COUNTRY -->
+
+    <section class="card">
+
+        <h2>🌍 Davlatni tanlang</h2>
+
+        <select id="countrySelect">
+            <option value="">Davlat yuklanmoqda...</option>
+        </select>
+
+    </section>
+
+
+    <!-- PRODUCTS -->
+
+    <section class="card">
+
+        <h2>💎 UC paketlari</h2>
+
+        <div
+            class="products"
+            id="products">
+
+            <div class="empty">
+                Avval davlatni tanlang.
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- AUTH MODAL -->
+
+<div class="modal" id="authModal">
+
+    <div class="modal-box">
+
+        <h2 id="authTitle">
+            DiserUc'ga kirish
+        </h2>
+
+        <div class="field">
+
+            <label>Email</label>
+
+            <input
+                id="email"
+                type="email"
+                placeholder="example@gmail.com">
+
+        </div>
+
+
+        <div class="field">
+
+            <label>Parol</label>
+
+            <input
+                id="password"
+                type="password"
+                placeholder="••••••••">
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-green"
+                onclick="login()">
+                Kirish
+            </button>
+
+            <button
+                class="btn btn-dark"
+                onclick="register()">
+                Ro'yxatdan o'tish
+            </button>
+
+        </div>
+
+
+        <div
+            id="authMessage"
+            class="message">
+        </div>
+
+
+        <button
+            class="btn btn-dark"
+            style="width:100%;margin-top:12px"
+            onclick="closeAuth()">
+
+            Yopish
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+const SUPABASE_URL =
+    "BU_YERGA_SUPABASE_URL";
+
+const SUPABASE_ANON_KEY =
+    "BU_YERGA_SUPABASE_ANON_KEY";
+
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+let currentUser = null;
+
+
+/* =========================================================
+   INIT
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        await checkUser();
+
+        await loadCountries();
+
+    }
+);
+
+
+/* =========================================================
+   AUTH STATE
+========================================================= */
+
+supabaseClient.auth.onAuthStateChange(
+    async (event, session) => {
+
+        currentUser =
+            session?.user || null;
+
+        updateAuthUI();
+
+    }
+);
+
+
+/* =========================================================
+   CHECK USER
+========================================================= */
+
+async function checkUser(){
+
+    const {
+        data,
+        error
+    } = await supabaseClient.auth.getSession();
+
+    if(error){
+
+        console.error(error);
+
+        return;
+
+    }
+
+    currentUser =
+        data.session?.user || null;
+
+    updateAuthUI();
+
+}
+
+
+/* =========================================================
+   AUTH UI
+========================================================= */
+
+function updateAuthUI(){
+
+    const loginButton =
+        document.getElementById("loginButton");
+
+    const logoutButton =
+        document.getElementById("logoutButton");
+
+    const userName =
+        document.getElementById("userName");
+
+
+    if(currentUser){
+
+        loginButton.style.display =
+            "none";
+
+        logoutButton.style.display =
+            "block";
+
+        userName.textContent =
+            currentUser.email || "";
+
+    }else{
+
+        loginButton.style.display =
+            "block";
+
+        logoutButton.style.display =
+            "none";
+
+        userName.textContent =
+            "";
+
+    }
+
+}
+
+
+/* =========================================================
+   OPEN AUTH
+========================================================= */
+
+function openAuth(){
+
+    document
+        .getElementById("authModal")
+        .classList.add("show");
+
+}
+
+
+/* =========================================================
+   CLOSE AUTH
+========================================================= */
+
+function closeAuth(){
+
+    document
+        .getElementById("authModal")
+        .classList.remove("show");
+
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function showMessage(
+    text,
+    type
+){
+
+    const box =
+        document.getElementById(
+            "authMessage"
+        );
+
+    box.textContent = text;
+
+    box.className =
+        "message show " + type;
+
+}
+
+
+/* =========================================================
+   REGISTER
+========================================================= */
+
+async function register(){
+
+    const email =
+        document.getElementById("email")
+        .value
+        .trim();
+
+    const password =
+        document.getElementById("password")
+        .value;
+
+
+    if(!email || !password){
+
+        showMessage(
+            "Email va parolni kiriting.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if(password.length < 6){
+
+        showMessage(
+            "Parol kamida 6 ta belgidan iborat bo'lsin.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.auth.signUp({
+
+            email: email,
+
+            password: password
+
+        });
+
+
+    if(error){
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if(data.user){
+
+        showMessage(
+            "Ro'yxatdan o'tish muvaffaqiyatli!",
+            "success"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+async function login(){
+
+    const email =
+        document.getElementById("email")
+        .value
+        .trim();
+
+    const password =
+        document.getElementById("password")
+        .value;
+
+
+    if(!email || !password){
+
+        showMessage(
+            "Email va parolni kiriting.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.auth.signInWithPassword({
+
+            email: email,
+
+            password: password
+
+        });
+
+
+    if(error){
+
+        showMessage(
+            error.message,
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    currentUser =
+        data.user;
+
+    updateAuthUI();
+
+    closeAuth();
+
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logout(){
+
+    await supabaseClient.auth.signOut();
+
+    currentUser = null;
+
+    updateAuthUI();
+
+}
+
+
+/* =========================================================
+   COUNTRIES
+========================================================= */
+
+async function loadCountries(){
+
+    const select =
+        document.getElementById(
+            "countrySelect"
+        );
+
+
+    /*
+       Agar countries jadvali hali
+       yaratilmagan bo'lsa, hozircha
+       vaqtinchalik davlatlar.
+    */
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+        .from("countries")
+        .select("*")
+        .eq("status","active")
+        .order("name");
+
+
+    if(error){
+
+        console.warn(
+            "countries jadvali hali tayyor emas:",
+            error.message
+        );
+
+
+        select.innerHTML = `
+
+            <option value="">
+                Davlatni tanlang
+            </option>
+
+            <option value="UZ">
+                🇺🇿 Uzbekistan
+            </option>
+
+            <option value="KZ">
+                🇰🇿 Kazakhstan
+            </option>
+
+            <option value="KG">
+                🇰🇬 Kyrgyzstan
+            </option>
+
+            <option value="PK">
+                🇵🇰 Pakistan
+            </option>
+
+            <option value="IN">
+                🇮🇳 India
+            </option>
+
+            <option value="AE">
+                🇦🇪 United Arab Emirates
+            </option>
+
+        `;
+
+        return;
+
+    }
+
+
+    select.innerHTML = `
+
+        <option value="">
+            Davlatni tanlang
+        </option>
+
+    `;
+
+
+    data.forEach(country => {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            country.id;
+
+        option.textContent =
+            `${country.flag || ""} ${country.name}`;
+
+        select.appendChild(option);
+
+    });
+
+}
+
+
+/* =========================================================
+   COUNTRY CHANGE
+========================================================= */
+
+document
+    .getElementById("countrySelect")
+    .addEventListener(
+        "change",
+        async function(){
+
+            const countryId =
+                this.value;
+
+            if(!countryId){
+
+                document
+                    .getElementById("products")
+                    .innerHTML = `
+                        <div class="empty">
+                            Avval davlatni tanlang.
+                        </div>
+                    `;
+
+                return;
+
+            }
+
+
+            await loadProducts(
+                countryId
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+async function loadProducts(
+    countryId
+){
+
+    const container =
+        document.getElementById(
+            "products"
+        );
+
+
+    container.innerHTML = `
+        <div class="empty">
+            Paketlar yuklanmoqda...
+        </div>
+    `;
+
+
+    /*
+       country_prices jadvali:
+
+       country_id
+       product_id
+       currency
+       price
+       bonus_uc
+    */
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+        .from("country_prices")
+        .select(`
+            id,
+            currency,
+            price,
+            bonus_uc,
+            products (
+                id,
+                name,
+                amount,
+                description
+            )
+        `)
+        .eq("country_id", countryId)
+        .eq("status", "active")
+        .order("price");
+
+
+    if(error){
+
+        console.error(error);
+
+        container.innerHTML = `
+            <div class="empty">
+                Paketlar hali database'ga
+                ulanmagan.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    if(!data || data.length === 0){
+
+        container.innerHTML = `
+            <div class="empty">
+                Bu davlat uchun paketlar topilmadi.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML = "";
+
+
+    data.forEach(item => {
+
+        const product =
+            item.products;
+
+
+        if(!product) return;
+
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+        card.className =
+            "product";
+
+
+        const bonus =
+            Number(item.bonus_uc || 0);
+
+
+        card.innerHTML = `
+
+            <div class="uc">
+                💎 ${product.amount} UC
+            </div>
+
+            ${
+                bonus > 0
+                ?
+                `<div class="bonus">
+                    +${bonus} bonus UC
+                </div>`
+                :
+                ""
+            }
+
+            <div class="price">
+                ${formatPrice(item.price)}
+                ${item.currency}
+            </div>
+
+            <button
+                class="btn btn-green"
+                onclick="buyProduct(
+                    '${item.id}'
+                )">
+
+                Sotib olish
+
+            </button>
+
+        `;
+
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+/* =========================================================
+   PRICE
+========================================================= */
+
+function formatPrice(
+    price
+){
+
+    return Number(price)
+        .toLocaleString(
+            "en-US"
+        );
+
+}
+
+
+/* =========================================================
+   BUY
+========================================================= */
+
+async function buyProduct(
+    countryPriceId
+){
+
+    if(!currentUser){
+
+        openAuth();
+
+        showMessage(
+            "Avval akkauntingizga kiring.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    /*
+       Narxni frontenddan olmaymiz.
+
+       Backend/database'dagi
+       country_prices qiymati
+       asosiy manba bo'ladi.
+    */
+
+
+    const {
+        data: priceData,
+        error: priceError
+    } =
+        await supabaseClient
+        .from("country_prices")
+        .select(`
+            id,
+            currency,
+            price,
+            bonus_uc,
+            products (
+                id,
+                amount,
+                name
+            )
+        `)
+        .eq("id", countryPriceId)
+        .eq("status","active")
+        .single();
+
+
+    if(priceError){
+
+        alert(
+            "Mahsulotni olishda xato."
+        );
+
+        console.error(priceError);
+
+        return;
+
+    }
+
+
+    const product =
+        priceData.products;
+
+
+    if(!product){
+
+        alert(
+            "Mahsulot topilmadi."
+        );
+
+        return;
+
+    }
+
+
+    /*
+       Buyurtma yaratish.
+
+       Muhim:
+       Keyinchalik buni Edge Function'ga
+       o'tkazamiz.
+
+       Shunda narxni client o'zgartira
+       olmaydi.
+    */
+
+
+    const {
+        data: order,
+        error: orderError
+    } =
+        await supabaseClient
+        .from("orders")
+        .insert({
+
+            user_id:
+                currentUser.id,
+
+            product_id:
+                product.id,
+
+            amount:
+                product.amount,
+
+            price:
+                priceData.price,
+
+            status:
+                "pending"
+
+        })
+        .select()
+        .single();
+
+
+    if(orderError){
+
+        alert(
+            "Buyurtma yaratilmadi."
+        );
+
+        console.error(orderError);
+
+        return;
+
+    }
+
+
+    alert(
+        "Buyurtma yaratildi!\n\n" +
+        "Order ID:\n" +
+        order.id +
+        "\n\n" +
+        "Keyingi bosqichda bu yerga " +
+        "Payme / Click to'lovi ulanadi."
+    );
+
+}
+
+</script>
+
+</body>
+  </html>
