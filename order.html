@@ -400,13 +400,28 @@ let selectedOrder = null;
    MESSAGE
 ========================================= */
 
-function showMessage(text,type){
+function showMessage(
+    "Buyurtma yaratildi! To‘lov sahifasiga o‘tilmoqda...",
+    "success"
+);
 
-    message.className =
-        "message " + type;
+orderButton.disabled = true;
 
-    message.textContent =
-        text;
+orderButton.textContent =
+    "To‘lovga o‘tilmoqda...";
+
+
+/*
+   Payment sahifasiga avtomatik o'tish
+*/
+
+setTimeout(function(){
+
+    window.location.href =
+        "payment.html?order=" +
+        encodeURIComponent(order.id);
+
+}, 800);
 
 }
 
