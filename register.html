@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DiserUc — Ro‘yxatdan o‘tish</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:#07110d;
+    color:#fff;
+    font-family:Arial,sans-serif;
+}
+
+.card{
+    width:min(430px,100%);
+    padding:28px;
+    background:#0b1b13;
+    border:1px solid #1b4932;
+    border-radius:22px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+.logo{
+    text-align:center;
+    font-size:25px;
+    font-weight:900;
+    margin-bottom:8px;
+}
+
+.logo span{
+    color:#23e681;
+}
+
+.subtitle{
+    text-align:center;
+    color:#81998c;
+    font-size:14px;
+    margin-bottom:25px;
+}
+
+label{
+    display:block;
+    color:#a9bdb1;
+    font-size:13px;
+    margin:16px 0 7px;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    border-radius:11px;
+    border:1px solid #244b36;
+    outline:none;
+    background:#07110d;
+    color:#fff;
+    font-size:15px;
+}
+
+input:focus{
+    border-color:#23e681;
+}
+
+button{
+    width:100%;
+    margin-top:22px;
+    padding:14px;
+    border:0;
+    border-radius:11px;
+    background:#23e681;
+    color:#03150c;
+    font-weight:900;
+    font-size:15px;
+    cursor:pointer;
+}
+
+button:hover{
+    filter:brightness(1.08);
+}
+
+button:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.login{
+    text-align:center;
+    margin-top:20px;
+    color:#81998c;
+    font-size:13px;
+}
+
+.login a{
+    color:#23e681;
+    text-decoration:none;
+    font-weight:900;
+}
+
+.message{
+    display:none;
+    margin-top:18px;
+    padding:13px;
+    border-radius:10px;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.message.error{
+    display:block;
+    background:#35151a;
+    border:1px solid #69303a;
+    color:#ffadb5;
+}
+
+.message.success{
+    display:block;
+    background:#0d3321;
+    border:1px solid #1e6942;
+    color:#8cffbc;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="logo">
+        Diser<span>Uc</span>
+    </div>
+
+    <div class="subtitle">
+        Yangi akkaunt yarating
+    </div>
+
+    <form id="registerForm">
+
+        <label for="email">
+            Email
+        </label>
+
+        <input
+            id="email"
+            type="email"
+            autocomplete="email"
+            placeholder="email@example.com"
+            required
+        >
+
+        <label for="password">
+            Parol
+        </label>
+
+        <input
+            id="password"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Kamida 6 ta belgi"
+            minlength="6"
+            required
+        >
+
+        <label for="confirmPassword">
+            Parolni tasdiqlang
+        </label>
+
+        <input
+            id="confirmPassword"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Parolni qayta kiriting"
+            minlength="6"
+            required
+        >
+
+        <button
+            id="registerButton"
+            type="submit">
+
+            Akkaunt ochish
+
+        </button>
+
+    </form>
+
+    <div id="message" class="message"></div>
+
+    <div class="login">
+        Akkauntingiz bormi?
+        <a href="login.html">
+            Login qilish
+        </a>
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================
+   SUPABASE
+========================================= */
+
+const SUPABASE_URL =
+    "https://iwfgmwyzhtcjqwcbcqti.supabase.co";
+
+const SUPABASE_ANON_KEY =
+    "sb_publishable_xuMg-m94o144YvaxkQNDSg_R94pt5JY";
+
+const db =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+const form =
+    document.getElementById("registerForm");
+
+const emailInput =
+    document.getElementById("email");
+
+const passwordInput =
+    document.getElementById("password");
+
+const confirmInput =
+    document.getElementById("confirmPassword");
+
+const registerButton =
+    document.getElementById("registerButton");
+
+const message =
+    document.getElementById("message");
+
+
+/* =========================================
+   MESSAGE
+========================================= */
+
+function showMessage(text,type){
+
+    message.className =
+        "message " + type;
+
+    message.textContent =
+        text;
+
+}
+
+
+/* =========================================
+   REGISTER
+========================================= */
+
+form.addEventListener(
+    "submit",
+    async function(event){
+
+        event.preventDefault();
+
+
+        const email =
+            emailInput.value.trim();
+
+        const password =
+            passwordInput.value;
+
+        const confirmPassword =
+            confirmInput.value;
+
+
+        if(password.length < 6){
+
+            showMessage(
+                "Parol kamida 6 ta belgidan iborat bo‘lishi kerak.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if(password !== confirmPassword){
+
+            showMessage(
+                "Parollar bir xil emas.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        registerButton.disabled = true;
+
+        registerButton.textContent =
+            "Akkaunt yaratilmoqda...";
+
+
+        const {
+            data,
+            error
+        } =
+            await db.auth.signUp({
+
+                email: email,
+
+                password: password
+
+            });
+
+
+        if(error){
+
+            console.error(error);
+
+            showMessage(
+                error.message,
+                "error"
+            );
+
+            registerButton.disabled = false;
+
+            registerButton.textContent =
+                "Akkaunt ochish";
+
+            return;
+
+        }
+
+
+        /*
+           Email confirmation yoqilgan bo‘lsa,
+           user emailini tasdiqlashi kerak.
+        */
+
+        if(
+            data.user &&
+            !data.session
+        ){
+
+            showMessage(
+                "Akkaunt yaratildi! Emailingizni tekshiring va tasdiqlash havolasini bosing.",
+                "success"
+            );
+
+            registerButton.disabled = true;
+
+            return;
+
+        }
+
+
+        showMessage(
+            "Akkaunt muvaffaqiyatli yaratildi! Login sahifasiga o‘tilmoqda...",
+            "success"
+        );
+
+
+        setTimeout(function(){
+
+            window.location.href =
+                "login.html";
+
+        },1000);
+
+    }
+);
+
+</script>
+
+</body>
+  </html>
