@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DiserUc Service — UC Paketlari</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    min-height:100vh;
+    background:#07110d;
+    color:#fff;
+    font-family:Arial,sans-serif;
+}
+
+header{
+    height:70px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 25px;
+    background:#08140f;
+    border-bottom:1px solid #193d2c;
+}
+
+.logo{
+    font-size:22px;
+    font-weight:900;
+}
+
+.logo span{
+    color:#23e681;
+}
+
+.back{
+    color:#9bb1a4;
+    text-decoration:none;
+    font-size:14px;
+}
+
+.back:hover{
+    color:#23e681;
+}
+
+main{
+    max-width:1100px;
+    margin:auto;
+    padding:40px 18px 70px;
+}
+
+.top{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.country{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    padding:9px 15px;
+    border:1px solid #205239;
+    border-radius:30px;
+    color:#9fbaa9;
+    margin-bottom:15px;
+}
+
+.title{
+    font-size:35px;
+    margin-bottom:10px;
+}
+
+.title span{
+    color:#23e681;
+}
+
+.subtitle{
+    color:#839b8d;
+}
+
+#products{
+    display:grid;
+    grid-template-columns:
+        repeat(auto-fit,minmax(220px,1fr));
+    gap:17px;
+}
+
+.product{
+    position:relative;
+    background:#0b1b13;
+    border:1px solid #1b4932;
+    border-radius:18px;
+    padding:22px;
+    overflow:hidden;
+    transition:.2s ease;
+}
+
+.product:hover{
+    transform:translateY(-4px);
+    border-color:#23e681;
+    box-shadow:0 12px 35px rgba(35,230,129,.08);
+}
+
+.product::after{
+    content:"";
+    position:absolute;
+    width:120px;
+    height:120px;
+    right:-55px;
+    top:-55px;
+    border-radius:50%;
+    background:#23e681;
+    opacity:.05;
+}
+
+.uc{
+    font-size:28px;
+    font-weight:900;
+    color:#23e681;
+}
+
+.product-name{
+    color:#8fa99a;
+    margin-top:6px;
+    font-size:13px;
+}
+
+.price{
+    margin-top:20px;
+    font-size:23px;
+    font-weight:900;
+}
+
+.currency{
+    color:#91a99b;
+    font-size:13px;
+    margin-left:4px;
+}
+
+.bonus{
+    margin-top:10px;
+    color:#8cffbc;
+    font-size:13px;
+}
+
+.buy{
+    width:100%;
+    border:0;
+    margin-top:18px;
+    padding:12px;
+    border-radius:10px;
+    background:#23e681;
+    color:#03150c;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.buy:hover{
+    filter:brightness(1.08);
+}
+
+.buy:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.loading,
+.empty,
+.error{
+    grid-column:1/-1;
+    text-align:center;
+    padding:50px 20px;
+    color:#829a8c;
+}
+
+.error{
+    color:#ff929c;
+}
+
+@media(max-width:600px){
+
+    header{
+        padding:0 16px;
+    }
+
+    .title{
+        font-size:29px;
+    }
+
+    #products{
+        grid-template-columns:1fr;
+    }
+
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        Diser<span>Uc</span> Service
+    </div>
+
+    <a href="country.html" class="back">
+        ← Davlatlar
+    </a>
+
+</header>
+
+
+<main>
+
+    <section class="top">
+
+        <div class="country" id="countryInfo">
+            🌍 Davlat yuklanmoqda...
+        </div>
+
+        <h1 class="title">
+            UC <span>paketlari</span>
+        </h1>
+
+        <p class="subtitle">
+            O'zingizga kerakli UC paketini tanlang.
+        </p>
+
+    </section>
+
+
+    <section id="products">
+
+        <div class="loading">
+            Paketlar yuklanmoqda...
+        </div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+/* =========================================
+   SUPABASE
+========================================= */
+
+const SUPABASE_URL =
+    "BU_YERGA_SUPABASE_URL";
+
+const SUPABASE_ANON_KEY =
+    "BU_YERGA_SUPABASE_ANON_KEY";
+
+
+const db =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+
+/* =========================================
+   URL PARAMETER
+========================================= */
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const countryId =
+    params.get("country");
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+const productsContainer =
+    document.getElementById(
+        "products"
+    );
+
+const countryInfo =
+    document.getElementById(
+        "countryInfo"
+    );
+
+
+/* =========================================
+   ESCAPE HTML
+========================================= */
+
+function escapeHTML(value){
+
+    return String(value)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+
+}
+
+
+/* =========================================
+   FORMAT PRICE
+========================================= */
+
+function formatPrice(value){
+
+    return Number(value)
+        .toLocaleString("en-US");
+
+}
+
+
+/* =========================================
+   LOAD COUNTRY
+========================================= */
+
+async function loadCountry(){
+
+    if(!countryId){
+
+        countryInfo.innerHTML =
+            "🌍 Davlat tanlanmagan";
+
+        return;
+
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await db
+        .from("countries")
+        .select(
+            "id,name,flag,currency"
+        )
+        .eq("id",countryId)
+        .eq("status","active")
+        .single();
+
+
+    if(error){
+
+        console.error(error);
+
+        countryInfo.innerHTML =
+            "🌍 Davlat topilmadi";
+
+        return;
+
+    }
+
+
+    countryInfo.innerHTML =
+        `${escapeHTML(data.flag || "🌍")}
+         ${escapeHTML(data.name)}
+         · ${escapeHTML(data.currency)}`;
+
+}
+
+
+/* =========================================
+   LOAD PRODUCTS
+========================================= */
+
+async function loadProducts(){
+
+    if(!countryId){
+
+        productsContainer.innerHTML = `
+            <div class="error">
+                Davlat tanlanmagan.
+                <br><br>
+                Avval davlatni tanlang.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    /*
+       country_prices orqali
+       aynan tanlangan davlatning
+       narxlarini olamiz.
+    */
+
+    const {
+        data,
+        error
+    } =
+        await db
+        .from("country_prices")
+        .select(`
+            id,
+            currency,
+            price,
+            bonus_uc,
+            status,
+            uc_products (
+                id,
+                name,
+                amount,
+                description
+            )
+        `)
+        .eq("country_id",countryId)
+        .eq("status","active")
+        .order("price");
+
+
+    if(error){
+
+        console.error(error);
+
+        productsContainer.innerHTML = `
+            <div class="error">
+                UC paketlarini yuklashda xatolik.
+                <br><br>
+                ${escapeHTML(error.message)}
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    if(!data || data.length === 0){
+
+        productsContainer.innerHTML = `
+            <div class="empty">
+                Bu davlat uchun hozircha
+                narxlar qo'shilmagan.
+                <br><br>
+                Tez orada qo'shiladi.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    productsContainer.innerHTML = "";
+
+
+    data.forEach(item => {
+
+        const product =
+            item.uc_products;
+
+
+        if(!product){
+            return;
+        }
+
+
+        const card =
+            document.createElement("article");
+
+        card.className =
+            "product";
+
+
+        const bonus =
+            Number(item.bonus_uc || 0);
+
+
+        const bonusHTML =
+            bonus > 0
+            ?
+            `
+            <div class="bonus">
+                +${bonus.toLocaleString()}
+                bonus UC
+            </div>
+            `
+            :
+            "";
+
+
+        card.innerHTML = `
+
+            <div class="uc">
+                💎 ${Number(
+                    product.amount
+                ).toLocaleString()} UC
+            </div>
+
+            <div class="product-name">
+                ${escapeHTML(
+                    product.name
+                )}
+            </div>
+
+            <div class="price">
+                ${formatPrice(
+                    item.price
+                )}
+
+                <span class="currency">
+                    ${escapeHTML(
+                        item.currency
+                    )}
+                </span>
+            </div>
+
+            ${bonusHTML}
+
+            <button
+                class="buy"
+                type="button">
+
+                Sotib olish →
+            </button>
+
+        `;
+
+
+        const button =
+            card.querySelector(".buy");
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                buyProduct(
+                    item.id
+                );
+
+            }
+        );
+
+
+        productsContainer.appendChild(
+            card
+        );
+
+    });
+
+}
+
+
+/* =========================================
+   BUY PRODUCT
+========================================= */
+
+function buyProduct(
+    countryPriceId
+){
+
+    /*
+       Keyingi payment sahifasiga
+       country_prices ID yuboriladi.
+
+       Payment sahifasi narxni yana
+       database'dan tekshiradi.
+    */
+
+    const nextParams =
+        new URLSearchParams({
+
+            price:
+                countryPriceId,
+
+            country:
+                countryId
+
+        });
+
+
+    window.location.href =
+        "payment.html?" +
+        nextParams.toString();
+
+}
+
+
+/* =========================================
+   START
+========================================= */
+
+async function start(){
+
+    await loadCountry();
+
+    await loadProducts();
+
+}
+
+
+start();
+
+</script>
+
+</body>
+  </html>
